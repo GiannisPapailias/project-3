@@ -63,25 +63,34 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    if (listen(server_fd, NUM_CLIENTS) < 0) {
-        perror("Listen failed");
-        exit(EXIT_FAILURE);
+    // Ορίζει τον server να ακούει για εισερχόμενες συνδέσεις
+if (listen(server_fd, NUM_CLIENTS) < 0) {
+    perror("Listen failed"); // Εκτυπώνει μήνυμα σφάλματος αν η listen αποτύχει
+    exit(EXIT_FAILURE); // Τερματίζει το πρόγραμμα με αποτυχία
+}
+
+// Εκτυπώνει μήνυμα ότι ο server τρέχει
+printf("Server is running!\n");
+
+// Εκτυπώνει το port στο οποίο ακούει ο server
+printf("Server is listening on port %d\n", PORT);
+
+int pipefd[2]; // Δημιουργεί έναν πίνακα 2 θέσεων για την επικοινωνία μέσω pipe
+
+// Δημιουργεί ένα pipe για την επικοινωνία μεταξύ διεργασιών
+if (pipe(pipefd) == -1) {
+    perror("Pipe failed"); // Αν η δημιουργία του pipe αποτύχει, εκτυπώνει μήνυμα σφάλματος
+    exit(EXIT_FAILURE); // Τερματίζει το πρόγραμμα με αποτυχία
+}
+
+// Βρόχος για την αποδοχή συνδέσεων από πελάτες
+for (i = 0; i < NUM_CLIENTS; i++) {
+    // Αποδέχεται μια εισερχόμενη σύνδεση και επιστρέφει ένα νέο socket
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0) {
+        perror("Accept failed"); // Αν η accept αποτύχει, εκτυπώνει μήνυμα σφάλματος
+        exit(EXIT_FAILURE); // Τερματίζει το πρόγραμμα με αποτυχία
     }
 
-    printf("Server is running!\n");
-    printf("Server is listening on port %d\n", PORT);
-
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        perror("Pipe failed");
-        exit(EXIT_FAILURE);
-    }
-
-    for (i = 0; i < NUM_CLIENTS; i++) {
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0) {
-            perror("Accept failed");
-            exit(EXIT_FAILURE);
-        }
 
         pid_t pid = fork();
         if (pid == 0) {  
